@@ -33,6 +33,20 @@ if (navigator.geolocation) {
         maxZoom: 19,
         attribution: '© OpenStreetMap'
       }).addTo(map);
+      // Use 'on' method to add a click listener to the map
+      map.on('click', function (mapEvent) {
+        // console.log(mapEvent);
+        // Use destructuring to get the latitude and longitude from the mapEvent.latlng object.
+        const { lat, lng } = mapEvent.latlng;
+        // Use the Leaflet library to add a marker to the map
+        const marker = L.marker([lat, lng]).addTo(map).bindPopup(L.popup({
+          maxWidth: 250,
+          minHeight: 100,
+          autoClose: false,
+          closeOnClick: false,
+          className: 'running-popup'
+        })).setPopupContent("Workout").openPopup();
+      });
     },
     function () { alert('Could not get your position') });
 }
