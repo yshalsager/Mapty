@@ -11,9 +11,56 @@ const inputDuration = document.querySelector('.form__input--duration');
 const inputCadence = document.querySelector('.form__input--cadence');
 const inputElevation = document.querySelector('.form__input--elevation');
 
+class Workout {
+  // A parent class, that both Cycling and Running will inherit from
+  date = new Date(); // ES6 class feild
+  // Use current date and time to create a unique id for each workout
+  // In a real-world applicaton, this would be a uuid or some other unique identifier
+  id = String(Date.now()).slice(-10);
+
+  constructor(coords, distance, duration) {
+    this.coords = coords; // an array of [lat, lng]
+    this.distance = distance; // in kilometers
+    this.duration = duration; // in minutes
+  }
+}
+
+class Running extends Workout {
+  type = 'running';
+
+  constructor(coords, distance, duration, cadence) {
+    super(coords, distance, duration);
+    this.cadence = cadence; // in rpm
+    this.claculatePace();
+  }
+
+  claculatePace() {
+    // pace is in minutes per kilometer
+    this.pace = this.duration / this.distance;
+    return this.pace;
+  }
+}
+
+class Cycling extends Workout {
+  type = 'cycling';
+
+  constructor(coords, distance, duration, elevationGain) {
+    super(coords, distance, duration);
+    this.elevationGain = elevationGain; // in meters
+    this.calculateSpeed();
+  }
+
+  calculateSpeed() {
+    // speed is in kilometers per hour
+    this.speed = this.distance / (this.duration / 60); // duration is in minutes, so it's devided by 60 to get hours
+    return this.speed;
+  }
+}
+
 class App {
   #map;
   #mapEvent;
+  #workouts = []; // An array of all the workouts
 
   constructor() {
     this._getPosition();
@@ -69,17 +116,67 @@ class App {
     inputCadence.closest('.form__row').classList.toggle('form__row--hidden');
   }
 
+  _isValidInput(...data) {
+    return data.every(item => Number.isFinite(item));
+  }
+  _isPositiveNumber(...data) {
+    return data.every(number => number > 0);
+  }
+
   _newWorkout(event) {
     event.preventDefault(); // Prevent the form from submitting
+
+    // get data from the form
+    const type = inputType.value; // inputType is a select option element, value can be 'cycling' or 'running'
+    const distance = +inputDistance.value; // inputDistance is a text input element, value should be converted to a number
+    const duration = +inputDuration.value; // inputDuration is also a text input element, value should be converted to a number as well
+    // Use destructuring to get the latitude and longitude from the mapEvent.latlng object.
+    const { lat, lng } = this.#mapEvent.latlng;
+    let workout;
+
+    // create a new workout object
+    // if workout is a running workout, create a new running workout object
+    if (type === 'running') {
+      const cadence = +inputCadence.value;
+      // check if data is valid
+      // if data is not a number, alert the user and return
+      if (
+        !this._isValidInput(distance, duration, cadence) ||
+        !this._isPositiveNumber(distance, duration, cadence)
+      )
+        return alert('Inputs must be a positive number!');
+      workout = new Running([lat, lng], distance, duration, cadence);
+    }
+    // if workout is a cycling workout, create a new cycling workout object
+    if (type === 'cycling') {
+      const elevation = +inputElevation.value;
+      if (
+        !this._isValidInput(distance, duration, elevation) ||
+        !this._isPositiveNumber(distance, duration)
+      )
+        return alert('Inputs must be a positive number!');
+      workout = new Cycling([lat, lng], distance, duration, elevation);
+    }
+
+    // add the workout to the workouts array
+    this.#workouts.push(workout);
+
+    // display the workout on the map as a marker
+    this._renderWorkoutMarker(workout);
+    // display the workout on the list as a list item
+
+    // hide the form
+    form.classList.add('hidden'); // Show the form
+
     // Clear form fields
     [inputDistance, inputDuration, inputCadence, inputElevation].forEach(
       input => (input.value = '')
     );
-    // console.log(mapEvent);
-    // Use destructuring to get the latitude and longitude from the mapEvent.latlng object.
-    const { lat, lng } = this.#mapEvent.latlng;
+  }
+
+  _renderWorkoutMarker(workout) {
     // Use the Leaflet library to add a marker to the map
-    const marker = L.marker([lat, lng])
+    L.marker(workout.coords)
       .addTo(this.#map)
       .bindPopup(
         L.popup({
@@ -87,12 +184,11 @@ class App {
           minHeight: 100,
           autoClose: false,
           closeOnClick: false,
-          className: 'running-popup',
+          className: `${workout.type}-popup`,
         })
       )
-      .setPopupContent('Workout')
+      .setPopupContent(String(workout.distance))
       .openPopup();
   }
 }
-
 const app = new App();
