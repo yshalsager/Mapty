@@ -17,6 +17,7 @@ class Workout {
   // Use current date and time to create a unique id for each workout
   // In a real-world applicaton, this would be a uuid or some other unique identifier
   id = String(Date.now()).slice(-10);
+  clicks = 0;
 
   constructor(coords, distance, duration) {
     this.coords = coords; // an array of [lat, lng]
@@ -32,6 +33,12 @@ class Workout {
     this.description = `${this.type} on ${
       months[this.date.getMonth()]
     } ${this.date.getDate()}`;
+  }
+
+  click() {
+    // Public method to increment the number of clicks
+    // This is accessible from all child classes
+    this.clicks++;
   }
 }
 
@@ -75,7 +82,13 @@ class App {
   #workouts = []; // An array of all the workouts
 
   constructor() {
+    // Get user's position
     this._getPosition();
+
+    // Load data from localStorage
+    this._loadData();
+
+    // Attach event listeners
     // Add an event listener to the form
     form.addEventListener('submit', this._newWorkout.bind(this));
     // Add an event listener to the form type change
@@ -117,6 +130,8 @@ class App {
     }).addTo(this.#map);
     // Use 'on' method to add a click listener to the map
     this.#map.on('click', this._showForm.bind(this));
+    // render the workouts on the map
+    this.#workouts.forEach(workout => this._renderWorkoutMarker(workout));
   }
 
   _showForm(mapE) {
@@ -190,6 +205,8 @@ class App {
     this._renderWorkout(workout);
     // hide the form
     this._hideForm();
+    // Store data in localStorage
+    this._storeData();
   }
 
   _renderWorkoutMarker(workout) {
@@ -269,6 +286,41 @@ class App {
     );
     // move the map to the workout's marker
     this.#map.flyTo(workout.coords);
+    workout.click();
+    this._storeData();
+  }
+
+  _storeData() {
+    // Store the workouts in localStorage as JSON string
+    // LocalStorage is blocking, so only small amounts of data should be stored
+    localStorage.setItem('workouts', JSON.stringify(this.#workouts));
+  }
+
+  _loadData() {
+    // Load workouts JSON string from localStorage
+    const workouts = JSON.parse(localStorage.getItem('workouts'));
+    if (!workouts) return;
+    // add the workouts to the workouts array
+    this.#workouts = workouts;
+    // render the workouts on the list
+    this.#workouts.forEach(workout => this._renderWorkout(workout));
+    // After converting objects to JSON, then converting back to objects, the prototype chain is lost.
+    // To fix this, we need to add the prototype chain back to the objects.
+    this.#workouts.forEach(workout => {
+      if (workout.type === 'running') {
+        Object.setPrototypeOf(workout, Running.prototype);
+      }
+      if (workout.type === 'cycling') {
+        Object.setPrototypeOf(workout, Cycling.prototype);
+      }
+    });
+  }
+
+  reset() {
+    // remove workouts from localStorage
+    localStorage.removeItem('workouts');
+    // reload the page
+    location.reload();
   }
 }
 const app = new App();
