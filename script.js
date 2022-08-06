@@ -80,6 +80,8 @@ class App {
     form.addEventListener('submit', this._newWorkout.bind(this));
     // Add an event listener to the form type change
     inputType.addEventListener('change', this._toggleElevationField);
+    // Add an event listener to move to marker on click
+    containerWorkouts.addEventListener('click', this._moveToMarker.bind(this));
   }
 
   _getPosition() {
@@ -254,6 +256,19 @@ class App {
     html += `</li>`;
     // insert the html as sibling of the form element
     form.insertAdjacentHTML('afterend', html);
+  }
+
+  _moveToMarker(event) {
+    // get the workout element from the clicked element
+    const workoutEl = event.target.closest('.workout');
+    if (!workoutEl) return;
+
+    // find the workout in the workouts array
+    const workout = this.#workouts.find(
+      workout => workout.id === workoutEl.dataset.id
+    );
+    // move the map to the workout's marker
+    this.#map.flyTo(workout.coords);
   }
 }
 const app = new App();
