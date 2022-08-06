@@ -90,6 +90,11 @@ a:visited {
   grid-column: 1 / -1;
 }
 
+/* Capitalize description first letter */
+.workout__title::first-letter, .leaflet-popup-content::first-letter {
+  text-transform:capitalize;
+}
+
 .workout__details {
   display: flex;
   align-items: baseline;

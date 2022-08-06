@@ -23,6 +23,16 @@ class Workout {
     this.distance = distance; // in kilometers
     this.duration = duration; // in minutes
   }
+
+  _setDescription() {
+    // capitalize first letter of the description is done using CSS now
+    // this.description = `${this.type[0].toUpperCase()}${this.type.slice(1)} on ${
+    //   months[this.date.getMonth()]
+    // } ${this.date.getDate()}`;
+    this.description = `${this.type} on ${
+      months[this.date.getMonth()]
+    } ${this.date.getDate()}`;
+  }
 }
 
 class Running extends Workout {
@@ -32,6 +42,7 @@ class Running extends Workout {
     super(coords, distance, duration);
     this.cadence = cadence; // in rpm
     this.claculatePace();
+    this._setDescription();
   }
 
   claculatePace() {
@@ -48,6 +59,7 @@ class Cycling extends Workout {
     super(coords, distance, duration);
     this.elevationGain = elevationGain; // in meters
     this.calculateSpeed();
+    this._setDescription();
   }
 
   calculateSpeed() {
@@ -111,6 +123,15 @@ class App {
     inputDistance.focus(); // Focus on the distance input
   }
 
+  _hideForm() {
+    // Clear form fields
+    [inputDistance, inputDuration, inputCadence, inputElevation].forEach(
+      input => (input.value = '')
+    );
+    // Hide the form
+    form.classList.add('hidden');
+  }
+
   _toggleElevationField() {
     inputElevation.closest('.form__row').classList.toggle('form__row--hidden');
     inputCadence.closest('.form__row').classList.toggle('form__row--hidden');
@@ -163,15 +184,10 @@ class App {
 
     // display the workout on the map as a marker
     this._renderWorkoutMarker(workout);
-    // display the workout on the list as a list item
-
+    // display the workout on the list
+    this._renderWorkout(workout);
     // hide the form
-    form.classList.add('hidden'); // Show the form
-
-    // Clear form fields
-    [inputDistance, inputDuration, inputCadence, inputElevation].forEach(
-      input => (input.value = '')
-    );
+    this._hideForm();
   }
 
   _renderWorkoutMarker(workout) {
@@ -187,8 +203,57 @@ class App {
           className: `${workout.type}-popup`,
         })
       )
-      .setPopupContent(String(workout.distance))
+      .setPopupContent(
+        `${workout.description} ${workout.type === 'running' ? '🏃‍♂️' : '🚴‍♀️'} `
+      )
       .openPopup();
+  }
+
+  _renderWorkout(workout) {
+    let html = `
+      <li class="workout workout--${workout.type}" data-id="${workout.id}">
+        <h2 class="workout__title">${workout.description}</h2>
+        <div class="workout__details">
+          <span class="workout__icon">${
+            workout.type === 'running' ? '🏃‍♂️' : '🚴‍♀️'
+          }</span>
+          <span class="workout__value">${workout.distance}</span>
+          <span class="workout__unit">km</span>
+        </div>
+        <div class="workout__details">
+          <span class="workout__icon">⏱</span>
+          <span class="workout__value">${workout.duration}</span>
+          <span class="workout__unit">min</span>
+        </div>`;
+    if (workout.type === 'running') {
+      html += `
+        <div class="workout__details">
+          <span class="workout__icon">⚡️</span>
+          <span class="workout__value">${workout.pace.toFixed(1)}</span>
+          <span class="workout__unit">min/km</span>
+        </div>
+        <div class="workout__details">
+          <span class="workout__icon">🦶🏼</span>
+          <span class="workout__value">${workout.cadence}</span>
+          <span class="workout__unit">spm</span>
+        </div>`;
+    }
+    if (workout.type === 'cycling') {
+      html += `
+        <div class="workout__details">
+          <span class="workout__icon">⚡️</span>
+          <span class="workout__value">${workout.speed.toFixed(1)}</span>
+          <span class="workout__unit">km/h</span>
+        </div>
+        <div class="workout__details">
+          <span class="workout__icon">⛰</span>
+          <span class="workout__value">${workout.elevationGain}</span>
+          <span class="workout__unit">m</span>
+        </div>`;
+    }
+    html += `</li>`;
+    // insert the html as sibling of the form element
+    form.insertAdjacentHTML('afterend', html);
   }
 }
 const app = new App();
