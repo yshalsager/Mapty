@@ -227,3 +227,21 @@ a:visited {
 .copyright {
   display: none;
 }
+
+.reset {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1.5rem 2.25rem;
+}
+
+.reset__btn {
+  background-color: var(--color-dark--2);
+  border: 5px solid var(--color-brand--2);
+  border-radius: 5px;
+  color: inherit;
+  cursor: pointer;
+  font-size: 1.75rem;
+  font-family: inherit;
+  padding: 1.5rem 5.25rem;
+}

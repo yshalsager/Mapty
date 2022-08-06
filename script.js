@@ -10,6 +10,7 @@ const inputDistance = document.querySelector('.form__input--distance');
 const inputDuration = document.querySelector('.form__input--duration');
 const inputCadence = document.querySelector('.form__input--cadence');
 const inputElevation = document.querySelector('.form__input--elevation');
+const resetBtn = document.querySelector('.reset__btn');
 
 class Workout {
   // A parent class, that both Cycling and Running will inherit from
@@ -95,6 +96,8 @@ class App {
     inputType.addEventListener('change', this._toggleElevationField);
     // Add an event listener to move to marker on click
     containerWorkouts.addEventListener('click', this._moveToMarker.bind(this));
+    // Add an event listener to the reset button
+    resetBtn.addEventListener('click', this.reset);
   }
 
   _getPosition() {
