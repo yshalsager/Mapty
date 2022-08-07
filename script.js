@@ -301,22 +301,28 @@ class App {
 
   _loadData() {
     // Load workouts JSON string from localStorage
-    const workouts = JSON.parse(localStorage.getItem('workouts'));
+    // After converting objects to JSON, then converting back to objects, the prototype chain is lost.
+    // To fix this, we need to add the prototype chain back to the objects.
+    const workouts = JSON.parse(localStorage.getItem('workouts')).map(workout =>
+      workout.type === 'running'
+        ? Object.assign(new Running(), workout)
+        : Object.assign(new Cycling(), workout)
+    );
     if (!workouts) return;
     // add the workouts to the workouts array
     this.#workouts = workouts;
     // render the workouts on the list
     this.#workouts.forEach(workout => this._renderWorkout(workout));
-    // After converting objects to JSON, then converting back to objects, the prototype chain is lost.
-    // To fix this, we need to add the prototype chain back to the objects.
-    this.#workouts.forEach(workout => {
-      if (workout.type === 'running') {
-        Object.setPrototypeOf(workout, Running.prototype);
-      }
-      if (workout.type === 'cycling') {
-        Object.setPrototypeOf(workout, Cycling.prototype);
-      }
-    });
+
+    // Apparently this should be avoided https://stackoverflow.com/a/32444689, instead Object.assign should be used
+    // this.#workouts.forEach(workout => {
+    //   if (workout.type === 'running') {
+    //     Object.setPrototypeOf(workout, Running.prototype);
+    //   }
+    //   if (workout.type === 'cycling') {
+    //     Object.setPrototypeOf(workout, Cycling.prototype);
+    //   }
+    // });
   }
 
   reset() {
